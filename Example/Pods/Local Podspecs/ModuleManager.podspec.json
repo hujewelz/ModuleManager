@@ -1,0 +1,22 @@
+{
+  "name": "ModuleManager",
+  "version": "0.1.0",
+  "summary": "A short description of ModuleManager.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/huluobo/ModuleManager",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "huluobo": "hujewelz@163.com"
+  },
+  "source": {
+    "git": "https://github.com/huluobo/ModuleManager.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source_files": "ModuleManager/Classes/**/*"
+}
