@@ -7,14 +7,6 @@
 
 import Foundation
 
-public final class TestModule: NSObject, Module {
-   
-    public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
-        print(#function)
-        return true
-    }
-}
-
 public protocol Module: UIApplicationDelegate {
     
 }
