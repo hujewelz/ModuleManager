@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ModuleManager'
-  s.version          = '0.1.0'
+  s.version          = '0.2.0'
   s.summary          = 'ModuleManager is a light framework to manage all the Modules in your porject.'
 
   s.description      = <<-DESC

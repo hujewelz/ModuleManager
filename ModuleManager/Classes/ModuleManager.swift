@@ -15,18 +15,39 @@ public final class ModuleManager: NSObject  {
     
     public static let shared = ModuleManager()
     
-    fileprivate var _modules: [Module] = []
-    
-    public func registerModule(with path: String) {
-        guard let dict = NSDictionary(contentsOfFile: path) else { fatalError("") }
-        guard let modules = dict["Module"] as? [String] else { return }
-        
-        register(modules)
+    private override init() {
     
     }
     
+    fileprivate var _modules: [Module] = []
+    
+    fileprivate var _objecMap: [String: Any] = [:]
+}
+
+extension ModuleManager {
+    /**
+       Register the modules whit a plist file.
+       - important: A plist file should like this:
+       ```
+        <key>Modules</key>
+        <array>
+          <string>ModuleA</string>
+        </array>
+       ```
+       - parameter path: the path of modules`s name plist
+     */
+    public func registerModule(with path: String) {
+        guard let dict = NSDictionary(contentsOfFile: path) else { fatalError(" The plist file dose not exist") }
+        guard let modules = dict["Modules"] as? [String] else {
+            fatalError("The plist file should contain the 'Modules' key ")
+        }
+        
+        register(modules)
+        
+    }
+    
     /// Register the modules whit module`s name.
-    /// - parameter modules: the module name need to be registed
+    /// - parameter modules: the modules name need to be registed
     public func register(_ moduleNames: String...) {
         register(moduleNames)
     }
@@ -50,8 +71,25 @@ public final class ModuleManager: NSObject  {
         }
         _modules = a as! [Module]
     }
+}
+
+extension ModuleManager {
+    public func register<T, P>(_ obj: T.Type, for _protocol: P.Type) where T: ModuleObjectProtocol {
+        let name = String(describing: _protocol)
+        _objecMap[name] = obj
+    }
     
-    
+    public func objec<T>(for _protocol: T.Type) -> T {
+        let name = String(describing: _protocol)
+        guard let Class = _objecMap[name] else {
+            fatalError("❌ Please register '\(_protocol)' first")
+        }
+        let moduleType = Class as! ModuleObjectProtocol.Type
+        guard let obj = moduleType.instance() as? T else {
+            fatalError("❌ '\(moduleType)' does not conform to expected type '\(_protocol)'")
+        }
+        return obj
+    }
 }
 
 extension ModuleManager: UIApplicationDelegate {

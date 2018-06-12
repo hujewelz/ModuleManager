@@ -7,7 +7,7 @@
 //
 
 import UIKit
-
+import ModuleManager
 
 class ViewController: UIViewController {
 
@@ -22,4 +22,3 @@ class ViewController: UIViewController {
     }
 
 }
-
