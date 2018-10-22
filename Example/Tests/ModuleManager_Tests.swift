@@ -14,13 +14,17 @@ struct User: ModuleObjectProtocol, UserProtocol {
     
 }
 
+class NewUser: NSObject,  UserProtocol {
+    var name: String = "New user"
+    
+}
 
 class Tests: XCTestCase {
     
     override func setUp() {
         super.setUp()
         
-        ModuleManager.shared.register(User.self, for: UserProtocol.self)
+        ModuleManager.register(User.self, for: UserProtocol.self)
     }
     
     override func tearDown() {
@@ -31,12 +35,19 @@ class Tests: XCTestCase {
     func testExample() {
         // This is an example of a functional test case.
         
-        var user = ModuleManager.shared.objec(for: UserProtocol.self)
+        var user = ModuleManager.object(for: UserProtocol.self)
         
         XCTAssertEqual(user.name, "hu jewelz")
         
         user.name = "new name"
         XCTAssertEqual(user.name, "new name")
+    }
+    
+    func testClass() {
+        ModuleManager.register(NewUser.self, for: UserProtocol.self)
+        let user = ModuleManager.object(for: UserProtocol.self)
+        
+        XCTAssertEqual(user.name, "New user")
     }
     
     func testPerformanceExample() {

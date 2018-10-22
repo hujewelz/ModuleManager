@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ModuleManager'
-  s.version          = '0.2.0'
+  s.version          = '0.2.1'
   s.summary          = 'ModuleManager is a light framework to manage all the Modules in your porject.'
 
   s.description      = <<-DESC
@@ -16,11 +16,9 @@ Pod::Spec.new do |s|
                        DESC
 
   s.homepage         = 'https://github.com/hujewelz/ModuleManager'
-  # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'huluobo' => 'hujewelz@163.com' }
   s.source           = { :git => 'https://github.com/hujewelz/ModuleManager.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
   s.ios.deployment_target = '8.0'
 

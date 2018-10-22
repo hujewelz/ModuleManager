@@ -9,6 +9,10 @@
 import UIKit
 import ModuleManager
 
+protocol BVCType {
+    func hello()
+}
+
 class ViewController: UIViewController {
 
     override func viewDidLoad() {
@@ -21,4 +25,9 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
+    @IBAction func buttonClicked(_ sender: Any) {
+        let bvc = ModuleManager.shared.object(for: BVCType.self/*, parameter: ["title": "BVC"]*/)
+        bvc.hello()
+        navigationController?.pushViewController(bvc as! UIViewController, animated: true)
+    }
 }

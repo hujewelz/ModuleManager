@@ -7,9 +7,7 @@
 
 import Foundation
 
-public protocol Module: UIApplicationDelegate {
-    
-}
+public protocol Module: UIApplicationDelegate {}
 
 public final class ModuleManager: NSObject  {
     
@@ -22,6 +20,8 @@ public final class ModuleManager: NSObject  {
     fileprivate var _modules: [Module] = []
     
     fileprivate var _objecMap: [String: Any] = [:]
+    
+    fileprivate var _instanceMap: [String: Any] = [:]
 }
 
 extension ModuleManager {
@@ -52,6 +52,7 @@ extension ModuleManager {
         register(moduleNames)
     }
     
+    /// Register the modules whit module`s name.
     public func register(_ moduleNames: [String]) {
         let a = moduleNames.flatMap({ (module) -> Module.Type? in
             NSClassFromString(module) as? Module.Type
@@ -65,6 +66,7 @@ extension ModuleManager {
         register(modules)
     }
     
+    /// Register the modules whit module`s type.
     public func register(_ modules: [Module.Type]) {
         let a = modules.flatMap {
             ($0 as? NSObject.Type)?.init()
@@ -74,22 +76,73 @@ extension ModuleManager {
 }
 
 extension ModuleManager {
-    public func register<T, P>(_ obj: T.Type, for _protocol: P.Type) where T: ModuleObjectProtocol {
-        let name = String(describing: _protocol)
-        _objecMap[name] = obj
+    /// Register regular Type which conformed the protocol.
+    /// The `anyType` can be `struct`, `enum` or `class`.
+    public static func register<T, P>(_ anyType: T.Type, for protocol: P.Type) where T: ModuleObjectProtocol {
+        ModuleManager.shared.register(anyType, for: `protocol`)
     }
     
-    public func objec<T>(for _protocol: T.Type) -> T {
-        let name = String(describing: _protocol)
+    public static func register<P>(for protocol: P.Type, returned: @escaping (Any?) -> P) {
+        return ModuleManager.shared.register(for: `protocol`, returned: returned)
+    }
+    
+    /// Return registed object conformed the protocol.
+    public static func object<T>(for protocol: T.Type) -> T {
+        return ModuleManager.shared.object(for: `protocol`)
+    }
+    
+    public static func object<T>(for protocol: T.Type, parameter: Any?) -> T {
+        return ModuleManager.shared.object(for: `protocol`, parameter: parameter)
+    }
+        
+    /// Register regular Type which conformed the protocol.
+    /// The `anyType` can be `struct`, `enum` or `class`
+    public func register<T, P>(_ anyType: T.Type, for protocol: P.Type) where T: ModuleObjectProtocol {
+        let name = String(describing: `protocol`)
+        _objecMap[name] = anyType
+    }
+    
+    public func register<P>(for protocol: P.Type, returned: @escaping (Any?) -> P) {
+        let name = String(describing: `protocol`)
+        _instanceMap[name] = returned
+    }
+    
+    public func object<T>(for protocol: T.Type, parameter: Any?) -> T {
+        let name = String(describing: `protocol`)
+        guard let instanceClosure = _instanceMap[name] else {
+            fatalError("❌ Please call 'register(for: returned:)' first to register '\(`protocol`)' ")
+        }
+        if let instanceClosure = instanceClosure as? (Any?) -> T {
+            return instanceClosure(parameter)
+        }
+        fatalError("❌ 'Your Type does not conform to expected type '\(`protocol`)'")
+    }
+    
+    /// Return registed object conformed the protocol
+    public func object<T>(for protocol: T.Type) -> T {
+        let name = String(describing: `protocol`)
+        if let instanceClosure = _instanceMap[name] {
+            if let instanceClosure = instanceClosure as? (Any?) -> T {
+                return instanceClosure(nil)
+            }
+            fatalError("❌ Your Type does not conform to expected type '\(`protocol`)'")
+        }
+        
         guard let Class = _objecMap[name] else {
-            fatalError("❌ Please register '\(_protocol)' first")
+            fatalError("❌ Please register '\(`protocol`)' first")
         }
         let moduleType = Class as! ModuleObjectProtocol.Type
         guard let obj = moduleType.instance() as? T else {
-            fatalError("❌ '\(moduleType)' does not conform to expected type '\(_protocol)'")
+            fatalError("❌ '\(moduleType)' does not conform to expected type '\(`protocol`)'")
         }
+        
         return obj
     }
+
+}
+
+protocol SomeProtocol {
+    func some()
 }
 
 extension ModuleManager: UIApplicationDelegate {
@@ -200,14 +253,12 @@ extension ModuleManager: UIApplicationDelegate {
         }
     }
     
-    
     @available(iOS 3.0, *)
     public func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         _modules.forEach {
             $0.application?(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
         }
     }
-    
     
     @available(iOS 3.0, *)
     public func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
@@ -216,14 +267,12 @@ extension ModuleManager: UIApplicationDelegate {
         }
     }
     
-    
     @available(iOS, introduced: 3.0, deprecated: 10.0, message: "Use UserNotifications Framework's -[UNUserNotificationCenterDelegate willPresentNotification:withCompletionHandler:] or -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:] for user visible notifications and -[UIApplicationDelegate application:didReceiveRemoteNotification:fetchCompletionHandler:] for silent remote notifications")
     public func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
         _modules.forEach {
             $0.application?(application, didReceiveRemoteNotification: userInfo)
         }
     }
-    
     
     @available(iOS, introduced: 4.0, deprecated: 10.0, message: "Use UserNotifications Framework's -[UNUserNotificationCenterDelegate willPresentNotification:withCompletionHandler:] or -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]")
     public func application(_ application: UIApplication, didReceive notification: UILocalNotification) {
@@ -236,13 +285,13 @@ extension ModuleManager: UIApplicationDelegate {
     // Called when your app has been activated by the user selecting an action from a local notification.
     // A nil action identifier indicates the default action.
     // You should call the completion handler as soon as you've finished handling the action.
+    
     @available(iOS, introduced: 8.0, deprecated: 10.0, message: "Use UserNotifications Framework's -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]")
     public func application(_ application: UIApplication, handleActionWithIdentifier identifier: String?, for notification: UILocalNotification, completionHandler: @escaping () -> Swift.Void) {
         _modules.forEach {
             $0.application?(application, handleActionWithIdentifier: identifier, for: notification, completionHandler: completionHandler)
         }
     }
-    
     
     @available(iOS, introduced: 9.0, deprecated: 10.0, message: "Use UserNotifications Framework's -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]")
     public func application(_ application: UIApplication, handleActionWithIdentifier identifier: String?, forRemoteNotification userInfo: [AnyHashable : Any], withResponseInfo responseInfo: [AnyHashable : Any], completionHandler: @escaping () -> Swift.Void) {
@@ -251,10 +300,10 @@ extension ModuleManager: UIApplicationDelegate {
         }
     }
     
-    
     // Called when your app has been activated by the user selecting an action from a remote notification.
     // A nil action identifier indicates the default action.
     // You should call the completion handler as soon as you've finished handling the action.
+    
     @available(iOS, introduced: 8.0, deprecated: 10.0, message: "Use UserNotifications Framework's -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]")
     public func application(_ application: UIApplication, handleActionWithIdentifier identifier: String?, forRemoteNotification userInfo: [AnyHashable : Any], completionHandler: @escaping () -> Swift.Void) {
         
@@ -263,7 +312,6 @@ extension ModuleManager: UIApplicationDelegate {
         }
     }
     
-    
     @available(iOS, introduced: 9.0, deprecated: 10.0, message: "Use UserNotifications Framework's -[UNUserNotificationCenterDelegate didReceiveNotificationResponse:withCompletionHandler:]")
     public func application(_ application: UIApplication, handleActionWithIdentifier identifier: String?, for notification: UILocalNotification, withResponseInfo responseInfo: [AnyHashable : Any], completionHandler: @escaping () -> Swift.Void) {
         _modules.forEach {
@@ -271,10 +319,10 @@ extension ModuleManager: UIApplicationDelegate {
         }
     }
     
-    
     /*! This delegate method offers an opportunity for applications with the "remote-notification" background mode to fetch appropriate new data in response to an incoming remote notification. You should call the fetchCompletionHandler as soon as you're finished performing that operation, so the system can accurately estimate its power and data cost.
      
      This method will be invoked even if the application was launched or resumed because of the remote notification. The respective delegate methods will be invoked first. Note that this behavior is in contrast to application:didReceiveRemoteNotification:, which is not called in those cases, and which will not be invoked if this method is implemented. !*/
+    
     @available(iOS 7.0, *)
     public func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Swift.Void) {
         _modules.forEach {
@@ -304,3 +352,11 @@ extension ModuleManager: UIApplicationDelegate {
     
 }
 
+extension Sequence {
+    func flatMap<ElementOfResult>(
+        _ transform: (Element) throws -> ElementOfResult?
+        ) rethrows -> [ElementOfResult] {
+        
+        return try compactMap(transform)
+    }
+}

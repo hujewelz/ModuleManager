@@ -21,6 +21,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Register your modules
 //      ModuleManager.shared.register(TestModule.self)
         
+        ModuleManager.shared.register(BViewController.self, for: BVCType.self)
+        
+        ModuleB.start()
+        
         return  ModuleManager.shared.application(application, didFinishLaunchingWithOptions: launchOptions)
     }
 
